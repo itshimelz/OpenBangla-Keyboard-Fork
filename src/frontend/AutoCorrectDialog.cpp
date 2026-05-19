@@ -43,24 +43,29 @@ AutoCorrectDialog::~AutoCorrectDialog() {
 
 void AutoCorrectDialog::loadData() {
   QFile dictFile(AutoCorrectFilePath());
-  if (!dictFile.open(QIODevice::ReadOnly)) {
+  if (dictFile.open(QIODevice::ReadOnly)) {
+    QByteArray data = dictFile.readAll();
+    dictFile.close();
+    QJsonDocument json(QJsonDocument::fromJson(data));
+    dict = json.object();
+  } else {
     LOG_ERROR("[AutoCorrect]: Error: Couldn't open autocorrect dictionary file!\n");
   }
-  QByteArray data = dictFile.readAll();
-  dictFile.close();
-
-  QJsonDocument json(QJsonDocument::fromJson(data));
-  dict = json.object();
   
-  dictFile.setFileName(gUserFolders->getUserAutoCorrectFile());
-  if (!dictFile.open(QIODevice::ReadOnly)) {
-    LOG_ERROR("[AutoCorrect]: Error: Couldn't open user specific AutoCorrect file!\n");
+  QString userACFile = gUserFolders->getUserAutoCorrectFile();
+  if (QFile::exists(userACFile)) {
+    dictFile.setFileName(userACFile);
+    if (dictFile.open(QIODevice::ReadOnly)) {
+      QByteArray data = dictFile.readAll();
+      dictFile.close();
+      QJsonDocument usrJson(QJsonDocument::fromJson(data));
+      usrDict = usrJson.object();
+    } else {
+      LOG_ERROR("[AutoCorrect]: Error: Couldn't open user specific AutoCorrect file!\n");
+    }
+  } else {
+    usrDict = QJsonObject(); // Initialize empty object if file doesn't exist yet
   }
-  data = dictFile.readAll();
-  dictFile.close();
-
-  QJsonDocument usrJson(QJsonDocument::fromJson(data));
-  usrDict = usrJson.object();
 }
 
 QVariantMap AutoCorrectDialog::getEntries() {
@@ -158,6 +163,8 @@ void AutoCorrectDialog::on_txtWith_textChanged(const QString &arg1) {
     // smiley rule
     if (ui->txtReplace->text() == arg1) {
       ui->lblPreviewW->setText(arg1);
+    } else if (arg1.startsWith('\\')) {
+      ui->lblPreviewW->setText(arg1.mid(1));
     } else {
       ui->lblPreviewW->setText(phonetic.convert(arg1));
     }

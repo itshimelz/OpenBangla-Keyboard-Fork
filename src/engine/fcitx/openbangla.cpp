@@ -78,8 +78,10 @@ public:
   public:
     void setGlobalCursorIndex(int index) {
       int items = this->pageSize();
-      int page = index / items;
-      setPage(page);
+      if (items > 0) {
+        int page = index / items;
+        setPage(page);
+      }
       CommonCandidateList::setGlobalCursorIndex(index);
     }
   };
@@ -404,7 +406,9 @@ void OpenBanglaEngine::reset(const InputMethodEntry & /*entry*/,
 RitiContext *OpenBanglaEngine::context(InputContext *ic) {
   // Check if the last input context is same as the current one.
   // Since RitiContext is shared, reset any existing state if needed.
-  if (currentIC_.isValid() && ic != currentIC_.get()) {
+  if (!currentIC_.isValid()) {
+    currentIC_ = ic->watch();
+  } else if (ic != currentIC_.get()) {
     suggestion_.reset();
     if (riti_context_ongoing_input_session(ctx_.get())) {
       riti_context_finish_input_session(ctx_.get());

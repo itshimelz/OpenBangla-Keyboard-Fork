@@ -154,3 +154,8 @@ fabric.properties
 *xcuserdata*
 *xcworkspace*
 /build
+
+# Arch Linux packaging artifacts
+*.pkg.tar.zst
+/pkg/
+/src/

@@ -9,13 +9,7 @@ if (OS_LINUX)
         CRATES riti
     )
 
-    if (ENABLE_IBUS)
-        add_subdirectory(ibus)
-    endif()
-
-    if (ENABLE_FCITX)
-        add_subdirectory(fcitx)
-    endif()
+    add_subdirectory(fcitx)
 endif (OS_LINUX)
 
 if (APPLE)

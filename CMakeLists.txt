@@ -63,22 +63,8 @@ if(OS_LINUX)
     include(FindPkgConfig)
     find_package(PkgConfig)
 
-    option(ENABLE_IBUS "Enable IBus support" OFF)
-    option(ENABLE_FCITX "Enable Fcitx support" OFF)
-
-    if((NOT ENABLE_IBUS) AND (NOT ENABLE_FCITX))
-        message(FATAL_ERROR "Please set atleast ENABLE_IBUS or ENABLE_FCITX to be ON to build a backend")
-    endif()
-
-    ## Find iBus ##
-    if(ENABLE_IBUS)
-        pkg_check_modules(IBUS REQUIRED ibus-1.0)
-    endif()
-
-    ## Find Fcitx ##
-    if(ENABLE_FCITX)
-        find_package(Fcitx5Core 5.0.5 REQUIRED) 
-    endif()
+    ## Find Fcitx5 ##
+    find_package(Fcitx5Core 5.0.5 REQUIRED)
 
     ## Find zstd ##
     pkg_check_modules(ZSTD REQUIRED libzstd)
@@ -151,13 +137,7 @@ set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "/usr/share/applications" "/us
                                                   "/usr/share/icons/hicolor/48x48" "/usr/share/icons/hicolor/48x48/apps"
                                                   "/usr/share/icons/hicolor/512x512" "/usr/share/icons/hicolor/512x512/apps")
 # Configure CPack on the basis of which backend we are building for.
-if(ENABLE_IBUS)
-    ## IBUS
-    set(CPACK_PACKAGE_NAME "ibus-openbangla")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "ibus (>= 1.5.1)")
-    set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase >= 5.9.0, ibus >= 1.5.1, ibus-libs >= 1.5.1, libzstd >= 1.3.3")
-    list(APPEND CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "/usr/share/ibus" "/usr/share/ibus/component")
-elseif(ENABLE_FCITX)
+if(OS_LINUX)
     ## FCITX
     set(CPACK_PACKAGE_NAME "fcitx-openbangla")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "fcitx5 (>= 5.0.5)")

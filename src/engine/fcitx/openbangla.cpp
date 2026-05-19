@@ -27,7 +27,7 @@
 #include <fcitx-utils/keysym.h>
 #include <fcitx-utils/log.h>
 #include <fcitx-utils/misc.h>
-#include <fcitx-utils/standardpath.h>
+#include <fcitx-utils/standardpaths.h>
 #include <fcitx-utils/stringutils.h>
 #include <fcitx-utils/utf8.h>
 #include <fcitx/addoninstance.h>
@@ -372,7 +372,7 @@ OpenBanglaEngine::OpenBanglaEngine(Instance *instance)
       factory_(
           [this](InputContext &ic) { return new OpenBanglaState(this, ic); }) {
   if (!fs::makePath(stringutils::joinPath(
-          StandardPath::global().userDirectory(StandardPath::Type::Data),
+          StandardPaths::global().userDirectory(StandardPathsType::Data).string(),
           "openbangla-keyboard"))) {
     throw std::runtime_error("Failed to create user directory");
   }
@@ -427,6 +427,40 @@ bool booleanValue(const RawConfig &config, const std::string &path,
   return value;
 }
 
+std::string resolveLayoutPath(const std::string &layoutPath) {
+  if (layoutPath == "avro_phonetic" || layoutPath.empty()) {
+    return layoutPath;
+  }
+
+  // If the path exists as is, return it
+  if (std::filesystem::exists(layoutPath)) {
+    return layoutPath;
+  }
+
+  // Extract filename/basename
+  std::filesystem::path p(layoutPath);
+  std::string filename = p.filename().string();
+  if (filename.find('.') == std::string::npos) {
+    filename += ".json";
+  }
+
+  // Try standard system layouts directory
+  std::string systemPath = std::string(PROJECT_DATADIR) + "/layouts/" + filename;
+  if (std::filesystem::exists(systemPath)) {
+    return systemPath;
+  }
+
+  // Try user layouts directory
+  std::string userPath = stringutils::joinPath(
+      StandardPaths::global().userDirectory(StandardPathsType::Data).string(),
+      "openbangla-keyboard/layouts/" + filename);
+  if (std::filesystem::exists(userPath)) {
+    return userPath;
+  }
+
+  return layoutPath; // fallback to original
+}
+
 void OpenBanglaEngine::populateConfig(const RawConfig &config) {
   // Keep sync with Settings.cpp
   std::string layoutPath = "avro_phonetic";
@@ -454,8 +488,9 @@ void OpenBanglaEngine::populateConfig(const RawConfig &config) {
   const bool ansiOutput = booleanValue(config, "settings/ANSI", false);
   const bool smartQuoting = booleanValue(config, "settings/SmartQuoting", true);
 
-  if (!riti_config_set_layout_file(cfg_.get(), layoutPath.data())) {
-    FCITX_OPENBANGLA_DEBUG() << "Failed to set layout file: " << layoutPath;
+  std::string resolvedPath = resolveLayoutPath(layoutPath);
+  if (!riti_config_set_layout_file(cfg_.get(), resolvedPath.data())) {
+    FCITX_OPENBANGLA_DEBUG() << "Failed to set layout file: " << resolvedPath;
   }
 
   riti_config_set_suggestion_include_english(cfg_.get(), includeEnglish);
@@ -483,8 +518,8 @@ void OpenBanglaEngine::populateConfig(const RawConfig &config) {
 }
 
 void OpenBanglaEngine::reloadConfig() {
-  auto path = StandardPath::global().locate(StandardPath::Type::Config,
-                                            "OpenBangla/Keyboard.conf");
+  auto path = StandardPaths::global().locate(StandardPathsType::Config,
+                                             "OpenBangla/Keyboard.conf");
   auto time = std::filesystem::file_time_type::min();
   if (!path.empty()) {
     time = std::filesystem::last_write_time(path);
@@ -494,8 +529,8 @@ void OpenBanglaEngine::reloadConfig() {
   }
 
   RawConfig config;
-  auto configFile = StandardPath::global().open(
-      StandardPath::Type::Config, "OpenBangla/Keyboard.conf", O_RDONLY);
+  auto configFile = StandardPaths::global().open(
+      StandardPathsType::Config, "OpenBangla/Keyboard.conf");
   if (configFile.isValid()) {
     FCITX_OPENBANGLA_DEBUG() << "Reload openbangla configuration";
     lastConfigTimestamp_ = time;

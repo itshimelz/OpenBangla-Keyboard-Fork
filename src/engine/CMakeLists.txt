@@ -9,6 +9,9 @@ if (OS_LINUX)
         CRATES riti
     )
 
+    find_package(SQLite3 REQUIRED)
+    target_link_libraries(riti INTERFACE SQLite3::SQLite3)
+
     add_subdirectory(fcitx)
 endif (OS_LINUX)
 

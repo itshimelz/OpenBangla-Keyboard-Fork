@@ -410,6 +410,7 @@ RitiContext *OpenBanglaEngine::context(InputContext *ic) {
     currentIC_ = ic->watch();
   } else if (ic != currentIC_.get()) {
     suggestion_.reset();
+    riti_context_reset_context(ctx_.get());
     if (riti_context_ongoing_input_session(ctx_.get())) {
       riti_context_finish_input_session(ctx_.get());
     }

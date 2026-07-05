@@ -134,6 +134,11 @@ public final class RitiSuggestion {
     public var isEmpty: Bool {
         riti_suggestion_is_empty(ptr)
     }
+
+    /// Whether this suggestion should be committed immediately
+    public var commitImmediately: Bool {
+        riti_suggestion_commit_immediately(ptr)
+    }
     
     /// Index of previously selected suggestion
     public var previouslySelectedIndex: UInt {

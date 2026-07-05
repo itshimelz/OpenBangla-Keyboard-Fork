@@ -379,8 +379,11 @@ class OpenBanglaIMKInputController: IMKInputController {
                 self._composedString = suggestion.preEditText(at: 0)
                 self._candidates = []
             }
-            
-            updateComposition()
+            if suggestion.commitImmediately {
+                commitComposition(sender)
+            } else {
+                updateComposition()
+            }
             return true
         } else {
             // Corner case: When old style kar typing is enabled, a lonely suggestion and an empty

@@ -349,8 +349,13 @@ public:
 
     if (engine_->suggestion() &&
         !riti_suggestion_is_empty(engine_->suggestion())) {
-      updateUI();
-      keyEvent.filterAndAccept();
+      if (riti_suggestion_commit_immediately(engine_->suggestion())) {
+        commit();
+        keyEvent.filterAndAccept();
+      } else {
+        updateUI();
+        keyEvent.filterAndAccept();
+      }
       return;
     }
 
